@@ -1,0 +1,26 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+
+# Soroban build outputs
+*.wasm
+*.optimized.wasm
+
+# Node/SDK
+node_modules/
+dist/
+sdk/dist/
+
+# Environment
+.env
+.deployed.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
