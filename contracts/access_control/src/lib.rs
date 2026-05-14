@@ -13,25 +13,77 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
-/// Storage keys used by the access control contract
+/// Storage keys used by the Access Control contract.
+/// 
+/// These keys store the addresses of accounts holding each role.
+/// Currently supports Admin and Strategist roles.
 #[contracttype]
 #[derive(Clone)]
 pub enum DataKey {
+    /// Admin address with the highest privileges.
+    /// Can transfer admin role and assign strategists.
     Admin,
+    /// Strategist address with operational permissions.
+    /// Can adjust strategy weights and trigger rebalances.
     Strategist,
-    // TODO: Add Guardian role key
-    // TODO: Add FeeCollector role key
+    // TODO: Add Guardian role key for emergency controls
+    // TODO: Add FeeCollector role key for protocol revenue management
 }
 
-/// Role identifiers used in events
+/// Role identifier for the Admin role used in events.
 const ROLE_ADMIN: Symbol = symbol_short!("ADMIN");
+
+/// Role identifier for the Strategist role used in events.
 const ROLE_STRATEGIST: Symbol = symbol_short!("STRAT");
 
 #[contract]
 pub struct AccessControlContract;
 
-#[contractimpl]
-impl AccessControlContract {
+#[contractimpl]the access control system with an admin address.
+    ///
+    /// This function must be called exactly once immediately after the contract is deployed.
+    /// It sets up the initial admin who can manage other roles.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    /// * `admin` - The initial admin address. This address will have permission to
+    ///   transfer the admin role to another address and assign strategists.
+    ///
+    /// # Panics
+    /// 
+    /// * If the contract is already initialized (has admin set)
+    ///
+    /// # Events
+    /// 
+    /// Emits an `(\"INIT\", \"ADMIN\")` event with the admin address.
+    ///
+    /// # Example
+    /// rieve the current admin address.
+    ///
+    /// This is a read-only query function that returns the address currently
+    /// holding the admin role.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    ///
+    /// # Returns
+    /// 
+    /// The admin address.
+    ///
+    /// # Panics
+    /// 
+    /// * If the contract is not initialized
+    /// ```ignore
+    /// let admin = Address::generate(&env);
+    /// access_control.initialize(&admin);
+    /// ```
+    ///
+    /// # Notes
+    /// 
+    /// The initial strategist is not set at initialization. Use [`set_strategist`](AccessControlContract::set_strategist)
+    /// after initialization to assign a strategis
     /// Initialize access control with an admin address.
     /// Must be called once immediately after deployment.
     ///
@@ -43,7 +95,19 @@ impl AccessControlContract {
         }
 
         env.storage().instance().set(&DataKey::Admin, &admin);
-
+rieve the current strategist address, if one is set.
+    ///
+    /// This is a read-only query function that returns the address currently
+    /// holding the strategist role, if any.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    ///
+    /// # Returns
+    /// 
+    /// The strategist address wrapped in `Some(...)`, or `None` if no strategist
+    /// has been assigned y
         env.events().publish(
             (symbol_short!("INIT"), ROLE_ADMIN),
             admin,
@@ -51,8 +115,51 @@ impl AccessControlContract {
     }
 
     /// Returns the current admin address.
-    pub fn admin(env: Env) -> Address {
-        env.storage()
+    pub fn admin the admin role to a new address.
+    ///
+    /// Only the current admin can call this function. After the transfer, the new admin
+    /// gains all admin permissions and the previous admin loses them.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    /// * `new_admin` - The address to transfer admin permissions to
+    ///
+    /// # Panics
+    /// 
+    /// * If the current admin does not authorize this call (checked via `require_auth()`)
+    /// * If the contract is not initialized
+    ///
+    /// # Events
+    /// 
+    /// Emits a `(\"XFER\", \"ADMIN\")` event with the old and new admin addresses.
+    ///
+    /// # Notes
+    /// 
+    /// Assign a strategist to the Strategist role.
+    ///
+    /// Only the admin can call this function. If a strategist is already set,
+    /// this replaces them with the new address.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    /// * `strategist` - The address to assign to the Strategist role
+    ///
+    /// # Panics
+    /// 
+    /// * If the admin does not authorize this call (checked via `require_auth()`)
+    /// * If the contract is not initialized
+    ///
+    /// # Events
+    /// 
+    /// Emits a `(\"SET\", \"STRAT\")` event with the new strategist address.
+    ///
+    /// # Notes
+    /// 
+    /// To revoke the strategist role (unset it), you must implement that feature first.
+    /// Currently, there's no way to set the strategist to `None` once assignedions, consider a two-step process
+    /// (propose + accept) in future version
             .instance()
             .get(&DataKey::Admin)
             .expect("not initialized")
@@ -64,7 +171,19 @@ impl AccessControlContract {
     }
 
     /// Transfers the admin role to a new address.
-    /// Only the current admin can perform this.
+    /// Only  whether an address holds the admin role.
+    ///
+    /// This is a read-only query function that returns whether the given address
+    /// is the current admin.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    /// * `address` - The address to check
+    ///
+    /// # Returns
+    /// 
+    /// `true` if the address is the current admin, `false` otherwis
     ///
     /// TODO: Consider a two-step transfer (propose + accept) for safety
     pub fn transfer_admin(env: Env, new_admin: Address) {
@@ -80,7 +199,20 @@ impl AccessControlContract {
 
         env.events().publish(
             (symbol_short!("XFER"), ROLE_ADMIN),
-            (current_admin, new_admin),
+            ( whether an address holds the strategist role.
+    ///
+    /// This is a read-only query function that returns whether the given address
+    /// is the current strategist.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    /// * `address` - The address to check
+    ///
+    /// # Returns
+    /// 
+    /// `true` if the address is the current strategist, `false` otherwise.
+    /// Returns `false` if no strategist has been set yet
         );
     }
 
@@ -94,8 +226,26 @@ impl AccessControlContract {
             .instance()
             .get(&DataKey::Admin)
             .expect("not initialized");
-
-        admin.require_auth();
+ function: Assert that the calling address is the admin.
+    ///
+    /// This is an internal helper function intended to be called by other contracts
+    /// that import this module for authorization checks. It verifies the caller is
+    /// the admin and panics otherwise.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    /// * `caller` - The address to check for admin permissions
+    ///
+    /// # Panics
+    /// 
+    /// * If the caller is not the admin
+    /// * If the contract is not initialized
+    ///
+    /// # Notes
+    /// 
+    /// The caller is expected to have already called `require_auth()` to verify
+    /// cryptographic authorization. This function only checks the ro
 
         env.storage()
             .instance()
@@ -104,7 +254,27 @@ impl AccessControlContract {
         env.events().publish(
             (symbol_short!("SET"), ROLE_STRATEGIST),
             strategist,
-        );
+        ); function: Assert that the calling address is the strategist.
+    ///
+    /// This is an internal helper function intended to be called by other contracts
+    /// that import this module for authorization checks. It verifies the caller is
+    /// the strategist and panics otherwise.
+    ///
+    /// # Arguments
+    /// 
+    /// * `env` - The Soroban contract environment
+    /// * `caller` - The address to check for strategist permissions
+    ///
+    /// # Panics
+    /// 
+    /// * If the caller is not the strategist
+    /// * If no strategist has been set yet
+    /// * If the contract is not initialized
+    ///
+    /// # Notes
+    /// 
+    /// The caller is expected to have already called `require_auth()` to verify
+    /// cryptographic authorization. This function only checks the rol
     }
 
     /// Checks whether an address holds the admin role.
