@@ -92,49 +92,25 @@ impl StrategyRouterContract {
     /// - `strategy`: The strategy contract address
     /// - `weight_bps`: Initial allocation weight in basis points
     ///
-    /// TODO: Validate that adding this strategy doesn't exceed 10000 total bps
+    /// TODO: Verify caller is admin
+    /// TODO: Validate weight_bps is within valid range (0-10000)
+    /// TODO: Check strategy is not already registered
+    /// TODO: Validate total weights don't exceed 10000 bps
     /// TODO: Call strategy.validate() to check interface compatibility
+    /// TODO: Add strategy to registry with weight and allocated balance
+    /// TODO: Emit ADD_STRATEGY event
     pub fn add_strategy(env: Env, caller: Address, strategy: Address, weight_bps: u32) {
-        Self::assert_admin(&env, &caller);
+        // TODO: Assert caller is admin
         caller.require_auth();
 
-        if weight_bps > 10_000 {
-            panic!("weight exceeds 10000 bps");
-        }
+        // TODO: Validate weight_bps <= 10000
+        // TODO: Check not already registered
+        // TODO: Create StrategyInfo struct
+        // TODO: Store in DataKey::Strategy(strategy)
+        // TODO: Append to StrategyList
+        // TODO: Emit event
 
-        // Check not already registered
-        if env.storage().instance().has(&DataKey::Strategy(strategy.clone())) {
-            panic!("strategy already registered");
-        }
-
-        let info = StrategyInfo {
-            address: strategy.clone(),
-            weight_bps,
-            active: true,
-            allocated: 0,
-        };
-
-        env.storage()
-            .instance()
-            .set(&DataKey::Strategy(strategy.clone()), &info);
-
-        // Append to strategy list
-        let mut list: Vec<Address> = env
-            .storage()
-            .instance()
-            .get(&DataKey::StrategyList)
-            .unwrap_or_else(|| Vec::new(&env));
-
-        list.push_back(strategy.clone());
-
-        env.storage()
-            .instance()
-            .set(&DataKey::StrategyList, &list);
-
-        env.events().publish(
-            (symbol_short!("ADD_STRAT"), caller),
-            (strategy, weight_bps),
-        );
+        panic!("TODO: add_strategy() implementation needed");
     }
 
     /// Deactivate a strategy. Admin only.
@@ -169,64 +145,45 @@ impl StrategyRouterContract {
 
     /// Update allocation weights. Strategist only.
     ///
-    /// TODO: Validate that new_weight_bps keeps total ≤ 10000
+    /// TODO: Verify caller is strategist
+    /// TODO: Verify strategy is registered
+    /// TODO: Validate new weight is within valid range (0-10000)
+    /// TODO: Check new total weights don't exceed 10000 bps across all strategies
+    /// TODO: Update strategy weight
+    /// TODO: Emit SET_WEIGHT event
     /// TODO: Automatically trigger rebalance after weight update
     pub fn set_weight(env: Env, caller: Address, strategy: Address, new_weight_bps: u32) {
-        Self::assert_strategist(&env, &caller);
+        // TODO: Assert caller is strategist
         caller.require_auth();
 
-        if new_weight_bps > 10_000 {
-            panic!("weight exceeds 10000 bps");
-        }
+        // TODO: Get strategy info (panic if not found)
+        // TODO: Validate new_weight_bps <= 10000
+        // TODO: Update weight in storage
+        // TODO: Emit event
 
-        let mut info: StrategyInfo = env
-            .storage()
-            .instance()
-            .get(&DataKey::Strategy(strategy.clone()))
-            .expect("strategy not found");
-
-        info.weight_bps = new_weight_bps;
-
-        env.storage()
-            .instance()
-            .set(&DataKey::Strategy(strategy.clone()), &info);
+        panic!("TODO: set_weight() implementation needed");
     }
 
     /// Allocate `amount` tokens to a given strategy.
     /// Only the vault can call this.
     ///
-    /// NOTE: This currently just updates accounting — no actual token movement.
-    /// TODO: Implement actual cross-contract token transfer to strategy
-    /// TODO: Respect weight limits when allocating
+    /// TODO: Verify caller is the vault contract
+    /// TODO: Verify strategy is registered and active
+    /// TODO: Validate allocation doesn't exceed strategy weight limits
+    /// TODO: Implement cross-contract token transfer to strategy contract
+    /// TODO: Update strategy's allocated balance
+    /// TODO: Update total_allocated counter
+    /// TODO: Emit ALLOCATE event
     pub fn allocate(env: Env, caller: Address, strategy: Address, amount: i128) {
-        Self::assert_vault(&env, &caller);
+        // TODO: Assert caller is vault
+        // TODO: Get strategy info (panic if not found)
+        // TODO: Check strategy is active
+        // TODO: Call strategy.deposit(amount) cross-contract to actually move funds
+        // TODO: Update strategy.allocated += amount
+        // TODO: Update total_allocated += amount
+        // TODO: Emit event
 
-        let mut info: StrategyInfo = env
-            .storage()
-            .instance()
-            .get(&DataKey::Strategy(strategy.clone()))
-            .expect("strategy not found");
-
-        if !info.active {
-            panic!("strategy is not active");
-        }
-
-        // TODO: Call strategy.deposit(amount) cross-contract here
-        info.allocated += amount;
-
-        env.storage()
-            .instance()
-            .set(&DataKey::Strategy(strategy.clone()), &info);
-
-        let total: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::TotalAllocated)
-            .unwrap_or(0);
-
-        env.storage()
-            .instance()
-            .set(&DataKey::TotalAllocated, &(total + amount));
+        panic!("TODO: allocate() implementation needed");
     }
 
     /// Returns info for a given strategy.

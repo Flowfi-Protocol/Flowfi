@@ -72,49 +72,25 @@ export class FlowFiClient {
    * @param amount - Amount to deposit (in token's smallest unit)
    * @returns DepositResult with tx hash and shares minted
    *
+   * TODO: Build deposit transaction to vault contract
+   * TODO: Prepare and sign transaction with signer
+   * TODO: Submit transaction to RPC
+   * TODO: Poll for confirmation
+   * TODO: Extract shares minted from return value
    * TODO: Add slippage protection (min shares out)
    * TODO: Support non-Keypair signers (e.g. WalletConnect)
    */
   async deposit(signer: Keypair, amount: bigint): Promise<DepositResult> {
-    const account = await this.server.getAccount(signer.publicKey());
+    // TODO: Get account sequence from RPC
+    // TODO: Create vault contract instance
+    // TODO: Build deposit operation
+    // TODO: Create and sign transaction
+    // TODO: Send to RPC
+    // TODO: Poll for confirmation
+    // TODO: Extract return value
+    // TODO: Return DepositResult with txHash and sharesMinted
 
-    const contract = new Contract(this.config.contracts.vault);
-
-    const operation = contract.call(
-      'deposit',
-      nativeToScVal(signer.publicKey(), { type: 'address' }),
-      nativeToScVal(amount, { type: 'i128' })
-    );
-
-    const tx = new TransactionBuilder(account, {
-      fee: BASE_FEE,
-      networkPassphrase: this.config.networkPassphrase,
-    })
-      .addOperation(operation)
-      .setTimeout(TX_TIMEOUT_SECONDS)
-      .build();
-
-    const preparedTx = await this.server.prepareTransaction(tx);
-    preparedTx.sign(signer);
-
-    const response = await this.server.sendTransaction(preparedTx);
-
-    if (response.status === 'ERROR') {
-      throw new Error(`Transaction failed: ${JSON.stringify(response)}`);
-    }
-
-    // Poll for confirmation
-    const confirmed = await this.pollForConfirmation(response.hash);
-
-    // Extract shares minted from return value
-    // TODO: Parse the actual return value from the confirmed tx result
-    const sharesMinted = this.extractReturnValue(confirmed);
-
-    return {
-      txHash: response.hash,
-      sharesMinted,
-      amountDeposited: amount,
-    };
+    throw new Error('TODO: deposit() implementation needed');
   }
 
   /**
@@ -124,44 +100,24 @@ export class FlowFiClient {
    * @param shares - Number of shares to burn
    * @returns WithdrawResult with tx hash and assets returned
    *
+   * TODO: Build withdraw transaction to vault contract
+   * TODO: Prepare and sign transaction with signer
+   * TODO: Submit transaction to RPC
+   * TODO: Poll for confirmation
+   * TODO: Extract assets returned from return value
    * TODO: Add minimum assets out parameter for slippage protection
    */
   async withdraw(signer: Keypair, shares: bigint): Promise<WithdrawResult> {
-    const account = await this.server.getAccount(signer.publicKey());
+    // TODO: Get account sequence from RPC
+    // TODO: Create vault contract instance
+    // TODO: Build withdraw operation
+    // TODO: Create and sign transaction
+    // TODO: Send to RPC
+    // TODO: Poll for confirmation
+    // TODO: Extract return value (assets_out)
+    // TODO: Return WithdrawResult with txHash and assetsReturned
 
-    const contract = new Contract(this.config.contracts.vault);
-
-    const operation = contract.call(
-      'withdraw',
-      nativeToScVal(signer.publicKey(), { type: 'address' }),
-      nativeToScVal(shares, { type: 'i128' })
-    );
-
-    const tx = new TransactionBuilder(account, {
-      fee: BASE_FEE,
-      networkPassphrase: this.config.networkPassphrase,
-    })
-      .addOperation(operation)
-      .setTimeout(TX_TIMEOUT_SECONDS)
-      .build();
-
-    const preparedTx = await this.server.prepareTransaction(tx);
-    preparedTx.sign(signer);
-
-    const response = await this.server.sendTransaction(preparedTx);
-
-    if (response.status === 'ERROR') {
-      throw new Error(`Transaction failed: ${JSON.stringify(response)}`);
-    }
-
-    const confirmed = await this.pollForConfirmation(response.hash);
-    const assetsReturned = this.extractReturnValue(confirmed);
-
-    return {
-      txHash: response.hash,
-      sharesBurned: shares,
-      assetsReturned,
-    };
+    throw new Error('TODO: withdraw() implementation needed');
   }
 
   /**
@@ -169,41 +125,24 @@ export class FlowFiClient {
    *
    * @param signer - Keypair of the claiming user
    * @returns ClaimRewardsResult with tx hash and amount claimed
+   *
+   * TODO: Build claim_rewards transaction to rewards contract
+   * TODO: Prepare and sign transaction with signer
+   * TODO: Submit transaction to RPC
+   * TODO: Poll for confirmation
+   * TODO: Extract reward amount from return value
    */
   async claimRewards(signer: Keypair): Promise<ClaimRewardsResult> {
-    const account = await this.server.getAccount(signer.publicKey());
+    // TODO: Get account sequence from RPC
+    // TODO: Create rewards contract instance
+    // TODO: Build claim_rewards operation
+    // TODO: Create and sign transaction
+    // TODO: Send to RPC
+    // TODO: Poll for confirmation
+    // TODO: Extract return value (rewards_claimed)
+    // TODO: Return ClaimRewardsResult with txHash and rewardsClaimed
 
-    const contract = new Contract(this.config.contracts.rewards);
-
-    const operation = contract.call(
-      'claim_rewards',
-      nativeToScVal(signer.publicKey(), { type: 'address' })
-    );
-
-    const tx = new TransactionBuilder(account, {
-      fee: BASE_FEE,
-      networkPassphrase: this.config.networkPassphrase,
-    })
-      .addOperation(operation)
-      .setTimeout(TX_TIMEOUT_SECONDS)
-      .build();
-
-    const preparedTx = await this.server.prepareTransaction(tx);
-    preparedTx.sign(signer);
-
-    const response = await this.server.sendTransaction(preparedTx);
-
-    if (response.status === 'ERROR') {
-      throw new Error(`Transaction failed: ${JSON.stringify(response)}`);
-    }
-
-    const confirmed = await this.pollForConfirmation(response.hash);
-    const rewardsClaimed = this.extractReturnValue(confirmed);
-
-    return {
-      txHash: response.hash,
-      rewardsClaimed,
-    };
+    throw new Error('TODO: claimRewards() implementation needed');
   }
 
   // ---------------------------------------------------------------------------
@@ -281,7 +220,11 @@ export class FlowFiClient {
   /**
    * Fetch info about all registered strategies.
    *
-   * TODO: This is currently incomplete — needs parsing of Vec<Address> from Soroban
+   * TODO: Implement strategy list fetching
+   * TODO: Call strategy_router.strategy_list() to get Vec<Address>
+   * TODO: For each address, call strategy_router.strategy_info(address)
+   * TODO: Parse Vec<StrategyInfo> from Soroban contract return values
+   * TODO: Return array of StrategyInfo objects
    */
   async getStrategies(): Promise<StrategyInfo[]> {
     // TODO: Implement full strategy list fetching
@@ -289,7 +232,8 @@ export class FlowFiClient {
     // 1. Call strategy_router.strategy_list() to get Vec<Address>
     // 2. For each address, call strategy_router.strategy_info(address)
     // 3. Parse and return all StrategyInfo objects
-    throw new Error('getStrategies() not yet fully implemented — see TODO');
+
+    throw new Error('TODO: getStrategies() implementation needed');
   }
 
   // ---------------------------------------------------------------------------

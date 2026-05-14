@@ -94,82 +94,50 @@ impl RewardsContract {
     /// This calculates pending rewards since the user's last interaction
     /// and adds them to their pending balance.
     ///
-    /// TODO: This should be called automatically by the vault via cross-contract call.
-    ///       Currently requires manual triggering, which is error-prone.
+    /// TODO: Compute newly accrued rewards since last checkpoint
+    /// TODO: Update user's pending reward balance
+    /// TODO: Update last interaction ledger
+    /// TODO: Integrate automatic checkpointing via vault cross-contract calls
+    /// TODO: Handle edge case where total_shares is zero
     pub fn checkpoint(env: Env, user: Address) {
-        let pending = Self::compute_pending(&env, &user);
+        // TODO: Get user's last checkpoint ledger
+        // TODO: Get current ledger number
+        // TODO: Calculate elapsed = current_ledger - last_ledger
+        // TODO: Get user's share snapshot
+        // TODO: Get total shares from vault
+        // TODO: Get reward rate
+        // TODO: Calculate pending = elapsed * rate * user_shares / total_shares / PRECISION
+        // TODO: Update user's pending_rewards storage
+        // TODO: Update user's last_ledger to current
 
-        let existing_pending: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::UserPendingRewards(user.clone()))
-            .unwrap_or(0);
-
-        env.storage().instance().set(
-            &DataKey::UserPendingRewards(user.clone()),
-            &(existing_pending + pending),
-        );
-
-        // Update last ledger to now
-        let current_ledger = env.ledger().sequence();
-        env.storage()
-            .instance()
-            .set(&DataKey::UserLastLedger(user.clone()), &current_ledger);
+        panic!("TODO: checkpoint() implementation needed");
     }
 
     /// Claim all pending rewards for the calling user.
     ///
     /// Transfers accumulated reward tokens to the user.
     ///
+    /// TODO: Checkpoint user to account for latest reward accrual
+    /// TODO: Get user's pending reward balance
+    /// TODO: Transfer reward tokens to user
+    /// TODO: Clear user's pending balance
+    /// TODO: Update total distributed counter
+    /// TODO: Emit claim event
     /// TODO: Add a minimum claim threshold to avoid dust transfers
     /// TODO: Emit a richer event with reward rate at time of claim
     pub fn claim_rewards(env: Env, user: Address) -> i128 {
         user.require_auth();
 
-        // Checkpoint first to include any new accrual
-        Self::checkpoint(env.clone(), user.clone());
+        // TODO: Call checkpoint(user) to calculate any new accrual
+        // TODO: Get pending_rewards from storage
+        // TODO: If pending > 0:
+        //   - Clear pending balance
+        //   - Update total_distributed
+        //   - Transfer reward tokens to user
+        //   - Emit claim event
+        // TODO: Return claimed amount
 
-        let pending: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::UserPendingRewards(user.clone()))
-            .unwrap_or(0);
-
-        if pending == 0 {
-            return 0;
-        }
-
-        // Clear pending rewards
-        env.storage()
-            .instance()
-            .set(&DataKey::UserPendingRewards(user.clone()), &0_i128);
-
-        // Update total distributed counter
-        let distributed: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::TotalDistributed)
-            .unwrap_or(0);
-        env.storage()
-            .instance()
-            .set(&DataKey::TotalDistributed, &(distributed + pending));
-
-        // Transfer reward tokens to user
-        let reward_token: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::RewardToken)
-            .expect("not initialized");
-
-        let token_client = token::Client::new(&env, &reward_token);
-        token_client.transfer(&env.current_contract_address(), &user, &pending);
-
-        env.events().publish(
-            (symbol_short!("CLAIM"), user.clone()),
-            pending,
-        );
-
-        pending
+        panic!("TODO: claim_rewards() implementation needed");
     }
 
     /// Returns the pending reward balance for a user (without claiming).

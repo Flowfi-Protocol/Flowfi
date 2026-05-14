@@ -76,6 +76,12 @@ impl VaultContract {
     /// - `from`: The depositing user (must have authorized this call)
     /// - `amount`: Amount of underlying tokens to deposit
     ///
+    /// TODO: Implement token transfer from user to vault
+    /// TODO: Calculate shares to mint proportional to deposit
+    /// TODO: Update user share balance and total shares
+    /// TODO: Update total assets in vault
+    /// TODO: Emit deposit event
+    /// TODO: Add protection against share price manipulation (ERC-4626-style virtual offset)
     /// TODO: Apply a minimum deposit threshold to prevent dust attacks
     /// TODO: Emit richer events with share price snapshot
     pub fn deposit(env: Env, from: Address, amount: i128) -> i128 {
@@ -85,65 +91,14 @@ impl VaultContract {
             panic!("deposit amount must be positive");
         }
 
-        let token_id: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::UnderlyingToken)
-            .expect("not initialized");
+        // TODO: Transfer tokens from user to vault
+        // TODO: Calculate shares_to_mint based on total_assets and total_shares
+        // TODO: Handle bootstrap case where vault is empty (1:1 ratio)
+        // TODO: Mint shares to user (update storage)
+        // TODO: Update total_assets
+        // TODO: Emit deposit event
 
-        let total_assets: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::TotalAssets)
-            .unwrap_or(0);
-
-        let total_shares: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::TotalShares)
-            .unwrap_or(0);
-
-        // Transfer tokens from user to vault
-        let token_client = token::Client::new(&env, &token_id);
-        token_client.transfer(&from, &env.current_contract_address(), &amount);
-
-        // Calculate shares to mint
-        // TODO: This naive formula is vulnerable to inflation attacks when total_assets is 0
-        //       but total_shares > 0 (shouldn't happen, but add invariant check)
-        let shares_to_mint: i128 = if total_assets == 0 || total_shares == 0 {
-            amount // Bootstrap: 1 token = 1 share
-        } else {
-            // shares = amount * total_shares / total_assets
-            amount
-                .checked_mul(total_shares)
-                .expect("overflow in share calculation")
-                / total_assets
-        };
-
-        if shares_to_mint <= 0 {
-            panic!("zero shares minted — deposit too small");
-        }
-
-        // Update storage
-        let user_shares: i128 = Self::get_shares(&env, &from);
-        env.storage()
-            .instance()
-            .set(&DataKey::Shares(from.clone()), &(user_shares + shares_to_mint));
-
-        env.storage()
-            .instance()
-            .set(&DataKey::TotalShares, &(total_shares + shares_to_mint));
-
-        env.storage()
-            .instance()
-            .set(&DataKey::TotalAssets, &(total_assets + amount));
-
-        env.events().publish(
-            (symbol_short!("deposit"), from.clone()),
-            (amount, shares_to_mint),
-        );
-
-        shares_to_mint
+        panic!("TODO: deposit() implementation needed");
     }
 
     /// Withdraw assets by burning `shares`.
@@ -156,6 +111,11 @@ impl VaultContract {
     /// - `from`: The withdrawing user
     /// - `shares`: Number of shares to burn
     ///
+    /// TODO: Verify user has sufficient shares to withdraw
+    /// TODO: Calculate assets_out proportional to shares and total vault balance
+    /// TODO: Burn shares (update storage)
+    /// TODO: Transfer underlying tokens back to user
+    /// TODO: Emit withdraw event
     /// TODO: Add a withdrawal fee mechanism
     /// TODO: Consider a withdrawal queue if strategy is illiquid
     pub fn withdraw(env: Env, from: Address, shares: i128) -> i128 {
@@ -165,66 +125,16 @@ impl VaultContract {
             panic!("shares must be positive");
         }
 
-        let user_shares = Self::get_shares(&env, &from);
-        if user_shares < shares {
-            panic!("insufficient shares");
-        }
+        // TODO: Get user's share balance
+        // TODO: Check user has sufficient shares (user_shares >= shares)
+        // TODO: Get total_shares and total_assets
+        // TODO: Calculate assets_out = shares * total_assets / total_shares
+        // TODO: Burn shares from user and update total_shares
+        // TODO: Decrement total_assets
+        // TODO: Transfer tokens back to user
+        // TODO: Emit withdraw event
 
-        let total_assets: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::TotalAssets)
-            .expect("vault not initialized");
-
-        let total_shares: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::TotalShares)
-            .expect("vault not initialized");
-
-        if total_shares == 0 {
-            panic!("no shares outstanding");
-        }
-
-        // Calculate assets to return
-        let assets_out: i128 = shares
-            .checked_mul(total_assets)
-            .expect("overflow")
-            / total_shares;
-
-        if assets_out <= 0 {
-            panic!("zero assets out — shares too small");
-        }
-
-        let token_id: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::UnderlyingToken)
-            .expect("not initialized");
-
-        // Burn shares and update state BEFORE transfer (checks-effects-interactions)
-        env.storage()
-            .instance()
-            .set(&DataKey::Shares(from.clone()), &(user_shares - shares));
-
-        env.storage()
-            .instance()
-            .set(&DataKey::TotalShares, &(total_shares - shares));
-
-        env.storage()
-            .instance()
-            .set(&DataKey::TotalAssets, &(total_assets - assets_out));
-
-        // Transfer tokens back to user
-        let token_client = token::Client::new(&env, &token_id);
-        token_client.transfer(&env.current_contract_address(), &from, &assets_out);
-
-        env.events().publish(
-            (symbol_short!("withdraw"), from.clone()),
-            (shares, assets_out),
-        );
-
-        assets_out
+        panic!("TODO: withdraw() implementation needed");
     }
 
     /// Returns the share balance of a given user.
